@@ -21,5 +21,10 @@
     },
     "dependencies": {
         "vue-router": "^4.5.0"
-    }
+    },
+    "engines": {
+  "node": "16.x",   // Or any other Node version you need
+  "npm": "7.x"      // You can specify your npm version here
+}
+
 }
