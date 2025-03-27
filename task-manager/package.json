@@ -25,6 +25,9 @@
     "engines": {
   "node": "16.x",   
   "npm": "7.x"     
-}
+},
+"scripts": {
+    "build": "vue-cli-service build"
+  }
 
 }
