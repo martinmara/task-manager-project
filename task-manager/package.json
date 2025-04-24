@@ -21,5 +21,13 @@
     },
     "dependencies": {
         "vue-router": "^4.5.0"
-    }
+    },
+    "engines": {
+  "node": "16.x",   
+  "npm": "7.x"     
+},
+"scripts": {
+    "build": "vue-cli-service build"
+  }
+
 }
