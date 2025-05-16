@@ -50,8 +50,8 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-    public function teams()
+public function teams()
 {
-    return $this->belongsToMany(Team::class);
+    return $this->hasMany(Team::class);
 }
 }

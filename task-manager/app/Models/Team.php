@@ -1,26 +1,34 @@
 <?php
 
+
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Team extends Model
 {
-    protected $fillable = ['name'];
+    use HasFactory;
 
-    public function members()
+    protected $fillable = ['user_id', 'name', 'description'];
+
+    // public function members()
+    // {
+    //     return $this->hasMany(User::class); 
+    // }
+
+    public function owner()
     {
-        return $this->hasMany(TeamMember::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
+    public function user()
+{
+    return $this->belongsTo(User::class);
+}
+public function members()
+{
+    return $this->belongsToMany(User::class, 'team_user'); // assuming a pivot table named team_user
 }
 
-// app/Models/TeamMember.php
-class TeamMember extends Model
-{
-    protected $fillable = ['team_id', 'name', 'email', 'role'];
 
-    public function team()
-    {
-        return $this->belongsTo(Team::class);
-    }
 }

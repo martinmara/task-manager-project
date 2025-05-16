@@ -14,7 +14,6 @@ defineProps({
 <template>
     <Head :title="`Welcome to Task Manager`" />
 
-    <!-- Navigation -->
     <header class="bg-white shadow-md py-4 px-6 flex justify-between items-center">
         <div class="text-2xl font-bold text-[#1e144f]"><img src="./components/images/logo-task-manager.jpg" alt="" style="width: 10%;border-radius: 100%;"></div>
         <nav class="hidden md:flex gap-6 text-[#1e144f] font-medium">
@@ -31,7 +30,6 @@ defineProps({
         </nav>
     </header>
 
-    <!-- Hero Section -->
     <section
         class="relative bg-cover bg-center h-[80vh] flex items-center justify-center text-center"
         style="background-image: url('https://images.pexels.com/photos/3867836/pexels-photo-3867836.jpeg?auto=compress&cs=tinysrgb&w=600');"
@@ -87,7 +85,6 @@ defineProps({
 </section>
 
 
-    <!-- Footer -->
     <footer class="bg-[#1e144f] text-white text-center py-6 mt-10">
         <p class="text-sm">
             © {{ new Date().getFullYear() }} {{ appName }}. All rights reserved. <br />
