@@ -29,6 +29,14 @@ public function members()
 {
     return $this->belongsToMany(User::class, 'team_user'); // assuming a pivot table named team_user
 }
+public function projects()
+{
+    return $this->hasMany(Project::class);
+}
+  public function users()
+    {
+        return $this->belongsToMany(User::class, 'team_user');
+    }
 
 
 }

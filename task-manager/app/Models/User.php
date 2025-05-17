@@ -54,4 +54,9 @@ public function teams()
 {
     return $this->hasMany(Team::class);
 }
+public function projects()
+{
+    return $this->belongsToMany(Project::class);
+}
+
 }
