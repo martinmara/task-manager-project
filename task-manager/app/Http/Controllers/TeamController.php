@@ -19,7 +19,8 @@ class TeamController extends Controller
 
     return Inertia::render('Teams/Index', [
         'teams' => $teams,
-        'users' => $users
+        'users' => $users,
+        'user' => Auth::user()
     ]);
 }
 public function destroy(Team $team)

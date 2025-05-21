@@ -11,8 +11,22 @@ const props = defineProps({
   user: Object,
 });
 
+// Admin check (by role name)
+const isAdmin = computed(() =>
+  props.user && (
+    (props.user.role && props.user.role.name && props.user.role.name.toLowerCase() === 'admin') ||
+    (props.user.roles && props.user.roles.some(r => r.name && r.name.toLowerCase() === 'admin'))
+  )
+);
+
+// Only show tasks assigned to the user, or all if admin
+const safeTasks = computed(() =>
+  isAdmin.value
+    ? (props.tasks ?? [])
+    : (props.tasks ?? []).filter(t => t.user_id === props.user.id)
+);
+
 const safeProjects = computed(() => props.projects ?? []);
-const safeTasks = computed(() => props.tasks ?? []);
 const safeTeams = computed(() => props.teams ?? []);
 
 const today = new Date();
@@ -24,6 +38,7 @@ const lastDay = new Date(year, month + 1, 0);
 const daysInMonth = lastDay.getDate();
 const startingDay = firstDay.getDay(); // Sunday = 0
 
+// Calendar: group tasks by due_date
 const days = computed(() => {
   const totalBoxes = 42; // 6 weeks
   const boxes = [];
@@ -32,7 +47,10 @@ const days = computed(() => {
     const dateNum = i - startingDay + 1;
     if (dateNum > 0 && dateNum <= daysInMonth) {
       const fullDate = new Date(year, month, dateNum).toISOString().split('T')[0];
-      const tasksForDay = safeTasks.value.filter(t => t.date?.startsWith(fullDate));
+      const tasksForDay = safeTasks.value.filter(t => {
+        if (!t.due_date) return false;
+        return t.due_date.slice(0, 10) === fullDate;
+      });
       boxes.push({ date: dateNum, tasks: tasksForDay });
     } else {
       boxes.push(null);
@@ -48,108 +66,130 @@ function goTo(path) {
 </script>
 
 <template>
-  <AuthenticatedLayout>
-    <div class="p-6 min-h-screen bg-[#f9fafb] text-gray-900 space-y-8">
-      <!-- Header -->
-      <div class="flex justify-between items-center">
-        <h1 class="text-3xl font-bold">Hello, {{ user.name }} 👋</h1>
-      </div>
+  <AuthenticatedLayout :user="user" :tasks="tasks" :teams="teams" :projects="projects">
+    
+      <!-- Foreground Content -->
+      <div class="relative z-1 p-6 space-y-8 text-gray-100">
+        <!-- Header -->
+        <div class="flex justify-between items-center">
+          <h1 class="text-3xl font-bold drop-shadow-lg">Hello, {{ user.name }} 👋</h1>
+        </div>
 
-      <!-- Grid Content -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Tasks -->
-        <div class="lg:col-span-2 space-y-6">
-          <section>
-            <h2 class="text-xl font-bold mb-4">Recent Tasks</h2>
-            <div class="grid md:grid-cols-2 gap-4">
-              <div
-                v-for="task in safeTasks.slice(0, 4)"
-                :key="task.id"
-                @click="goTo(`/tasks`)"
-                class="bg-white p-5 rounded-xl shadow hover:shadow-md cursor-pointer transition"
-              >
-                <h3 class="font-semibold text-lg mb-1">{{ task.title }}</h3>
-                <p class="text-sm text-gray-500">{{ task.description }}</p>
-                <div class="mt-3 text-xs text-gray-600">
-                  📁 {{ task.project?.name ?? 'No Project' }}
+        <!-- Grid Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Recent Tasks -->
+          <div class="lg:col-span-2 space-y-6">
+            <section>
+              <h2 class="text-2xl font-semibold mb-4">Recent Tasks</h2>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div
+                  v-for="task in safeTasks.slice(0, 4)"
+                  :key="task.id"
+                  @click="goTo(`/tasks`)"
+                  class="bg-white/20 p-5 rounded-2xl shadow-lg hover:shadow-2xl transition-transform transform hover:-translate-y-1 cursor-pointer"
+                >
+                  <h3 class="font-semibold text-lg mb-1">{{ task.title }}</h3>
+                  <p class="text-sm">{{ task.description }}</p>
+                  <div class="mt-3 text-xs">
+                    <i class="fas fa-folder-open text-yellow-400 mr-1"></i>
+                    {{ task.project?.name ?? 'No Project' }}
+                  </div>
                 </div>
               </div>
-            </div>
-          </section>
-        </div>
+            </section>
+          </div>
 
-        <!-- Projects and Teams -->
-        <div class="space-y-6">
-          <!-- Projects -->
-          <section class="bg-white p-5 rounded-xl shadow">
-            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-              <ClipboardList class="w-5 h-5 text-green-500" /> Projects
-            </h2>
-            <div class="space-y-3">
-              <div
-                v-for="project in safeProjects.slice(0, 3)"
-                :key="project.id"
-                @click="goTo(`/projects`)"
-                class="p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition"
-              >
-                <div class="font-medium">{{ project.name }}</div>
-                <div class="text-sm text-gray-500">{{ project.tasks?.length || 0 }} tasks</div>
-              </div>
-            </div>
-          </section>
-
-          <!-- Teams -->
-          <section class="bg-white p-5 rounded-xl shadow">
-            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-              <Users class="w-5 h-5 text-purple-500" /> Teams
-            </h2>
-            <div class="space-y-3">
-              <div
-                v-for="team in safeTeams.slice(0, 4)"
-                :key="team.id"
-                @click="goTo(`/teams`)"
-                class="flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer"
-              >
-                <img
-                  :src="`https://ui-avatars.com/api/?name=${team.name}&background=6366f1&color=fff`"
-                  class="w-8 h-8 rounded-full"
-                  alt="Team"
-                />
-                <div>
-                  <div class="font-medium">{{ team.name }}</div>
-                  <div class="text-sm text-gray-500">{{ team.users?.length ?? 0 }} members</div>
+          <!-- Projects & Teams -->
+          <div class="space-y-6">
+            <!-- Projects -->
+            <section class="bg-white/20 p-5 rounded-2xl shadow-lg">
+              <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">
+                <ClipboardList class="w-6 h-6 text-yellow-400" /> Projects
+              </h2>
+              <div class="space-y-3">
+                <div
+                  v-for="project in safeProjects.slice(0, 3)"
+                  :key="project.id"
+                  @click="goTo(`/projects`)"
+                  class="p-3 rounded-lg hover:bg-white/30 transition cursor-pointer flex justify-between items-center"
+                >
+                  <span>{{ project.name }}</span>
+                  <span class="text-sm">{{ project.tasks?.length || 0 }} tasks</span>
                 </div>
               </div>
-            </div>
-          </section>
-        </div>
-      </div>
+            </section>
 
-      <!-- Custom Calendar -->
-      <section class="bg-white p-5 rounded-xl shadow mt-10">
-        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-          <CalendarDays class="w-5 h-5 text-blue-500" />
-          Calendar – {{ today.toLocaleString('default', { month: 'long' }) }} {{ year }}
-        </h2>
-        <div class="grid grid-cols-7 text-sm text-gray-600 font-semibold mb-2">
-          <div v-for="d in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="d" class="text-center">{{ d }}</div>
+            <!-- Teams -->
+            <section class="bg-white/20 p-5 rounded-2xl shadow-lg">
+              <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">
+                <Users class="w-6 h-6 text-yellow-400" /> Teams
+              </h2>
+              <div class="space-y-3">
+                <div
+                  v-for="team in safeTeams.slice(0, 4)"
+                  :key="team.id"
+                  @click="goTo(`/teams`)"
+                  class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/30 transition cursor-pointer"
+                >
+                  <div>
+                    <div class="font-medium">{{ team.name }}</div>
+                    <div class="text-sm">{{ team.users?.length ?? 0 }} members</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
         </div>
-        <div class="grid grid-cols-7 gap-2 text-sm">
-          <div
-            v-for="(day, i) in days"
-            :key="i"
-            class="min-h-[60px] border rounded p-1 relative"
-            :class="day ? 'bg-gray-50' : ''"
-          >
-            <div v-if="day">
-              <div class="font-semibold text-xs text-gray-700">{{ day.date }}</div>
-              <div v-for="task in day.tasks" :key="task.id" class="text-xs mt-1 bg-blue-100 text-blue-800 rounded px-1 truncate">
-                {{ task.title }}
+
+        <!-- Calendar -->
+        <section class="bg-white/20 p-5 rounded-2xl shadow-lg mt-10">
+          <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">
+            <CalendarDays class="w-6 h-6 text-yellow-400" />
+            Calendar — {{ today.toLocaleString('default', { month: 'long' }) }} {{ year }}
+          </h2>
+          <div class="grid grid-cols-7 text-sm font-semibold mb-2 text-gray-200">
+            <div v-for="d in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="d" class="text-center">{{ d }}</div>
+          </div>
+          <div class="grid grid-cols-7 gap-1 text-sm text-gray-100">
+            <div
+              v-for="(day, i) in days"
+              :key="i"
+              class="min-h-[60px] border border-white/20 rounded p-1 relative"
+              :class="day ? 'bg-white/10' : ''"
+            >
+              <div v-if="day">
+                <div class="font-semibold text-xs">{{ day.date }}</div>
+                <div
+                  v-for="task in day.tasks"
+                  :key="task.id"
+                  @click="goTo(`/tasks/${task.id}`)"
+                  class="mt-1 truncate text-xs bg-yellow-400/30 text-yellow-100 rounded px-1 cursor-pointer hover:bg-yellow-400/50 transition"
+                  title="View Task"
+                >
+                  {{ task.title }}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
   </AuthenticatedLayout>
 </template>
+
+<style scoped>
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Fade-in for the whole page */
+.relative.z-10 {
+  animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>

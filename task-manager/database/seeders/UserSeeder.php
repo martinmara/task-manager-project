@@ -11,28 +11,22 @@ class UserSeeder extends Seeder
 {
     public function run()
     {
-        $adminRole = Role::where('name', 'Admin')->first();
-        $employeeRole = Role::where('name', 'Employee')->first();
-        $managerRole = Role::where('name', 'Manager')->first();
+        // Ensure the roles exist
+        $adminRole = Role::firstOrCreate(['name' => 'Admin']);
+        $employeeRole = Role::firstOrCreate(['name' => 'user']);
 
         $users = [
             [
                 'name' => 'Admin User',
                 'email' => 'admin@example.com',
                 'password' => Hash::make('password'),
-                'roles' => [$adminRole],
+                'roles' => [$adminRole->id], // Use ID, not the model
             ],
             [
-                'name' => 'Employee User',
-                'email' => 'employee@example.com',
+                'name' => 'User',
+                'email' => 'user@example.com',
                 'password' => Hash::make('password'),
-                'roles' => [$employeeRole],
-            ],
-            [
-                'name' => 'Manager User',
-                'email' => 'manager@example.com',
-                'password' => Hash::make('password'),
-                'roles' => [$managerRole],
+                'roles' => [$employeeRole->id], // Use ID, not the model
             ],
         ];
 
@@ -45,7 +39,7 @@ class UserSeeder extends Seeder
                 ]
             );
 
-            $user->roles()->sync($userData['roles']);
+            $user->roles()->sync($userData['roles']); // Accepts array of IDs
         }
     }
 }

@@ -18,8 +18,8 @@ return new class extends Migration
             $table->foreignId('project_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Assigned user
             $table->enum('status', ['todo', 'in_progress', 'done'])->default('todo');
-
-            $table->date('due_date')->nullable();  // Added due_date column
+            $table->text('comments')->nullable();
+            $table->date('due_date')->nullable();  
 
             $table->timestamps();
         });
