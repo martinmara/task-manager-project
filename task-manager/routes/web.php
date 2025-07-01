@@ -62,6 +62,7 @@ Route::delete('/projects/{id}', [ProjectController::class, 'destroy'])->name('pr
     Route::get('/timesheets', [TimesheetController::class, 'index'])->name('timesheets.index');
     Route::post('/timesheets', [TimesheetController::class, 'store'])->name('timesheets.store');
     Route::put('/timesheets/{id}', [TimesheetController::class, 'update'])->name('timesheets.update');
+    Route::put('/tasks/{id}/comment', [TaskController::class, 'updateComment'])->name('tasks.comment');
 });
 
 require __DIR__.'/auth.php';

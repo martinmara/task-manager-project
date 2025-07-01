@@ -71,8 +71,7 @@ function deleteProject(id) {
                 </button>
             </div>
 
-            <!-- Project List -->
-            <div>
+            <div style="margin-bottom: 50px;">
                 <h2 class="text-2xl font-semibold mb-4">All Projects</h2>
                 <ul class="space-y-4">
                     <li

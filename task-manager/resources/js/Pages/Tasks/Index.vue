@@ -5,11 +5,10 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 
 const props = defineProps({
     tasks: Array,
-    projects: Array, // Each project has a `team` object with `users` array
+    projects: Array,
     user: Object
 })
 
-// Admin check (by role name)
 const isAdmin = computed(() =>
     props.user && (
         (props.user.role && props.user.role.toLowerCase() === 'admin') ||
@@ -17,7 +16,6 @@ const isAdmin = computed(() =>
     )
 )
 
-// Only show tasks assigned to the user, or all if admin
 const visibleTasks = computed(() =>
     isAdmin.value
         ? (props.tasks ?? [])
@@ -33,11 +31,28 @@ const form = ref({
     comments: ''
 })
 
-// Compute users assigned to the team of the selected project
 const filteredUsers = computed(() => {
     const project = props.projects.find(p => p.id === form.value.project_id)
     return project?.team?.users ?? []
 })
+
+// Track which comment textarea is open
+const openCommentTaskId = ref(null)
+const commentInput = ref('')
+
+function showCommentBox(taskId, currentComment) {
+    openCommentTaskId.value = taskId
+    commentInput.value = currentComment || ''
+}
+
+function submitComment(taskId) {
+    router.put(`/tasks/${taskId}/comment`, { comments: commentInput.value }, {
+        onSuccess: () => {
+            openCommentTaskId.value = null
+            commentInput.value = ''
+        }
+    })
+}
 
 function submit() {
     router.post('/tasks', form.value, {
@@ -69,7 +84,6 @@ function completeTask(id) {
             <div class="bg-gray-800 p-6 rounded-xl shadow border border-white/10">
                 <h1 class="text-3xl font-bold mb-6">Tasks</h1>
 
-                <!-- Show form only for admin -->
                 <div v-if="isAdmin" class="bg-gray-900 p-6 rounded-lg border border-white/10 mb-8">
                     <h2 class="text-xl font-semibold mb-4">Add Task</h2>
                     <div class="space-y-4">
@@ -77,7 +91,8 @@ function completeTask(id) {
                             class="w-full px-4 py-2 bg-gray-800 border border-white/20 rounded text-white placeholder-gray-400 focus:outline-none focus:ring focus:border-yellow-400" />
                         <textarea v-model="form.description" placeholder="Description"
                             class="w-full px-4 py-2 bg-gray-800 border border-white/20 rounded text-white placeholder-gray-400 focus:outline-none focus:ring focus:border-yellow-400"></textarea>
-                        <input v-model="form.due_date" type="date"
+                        <label for="DUE Date">Due Date</label>
+                            <input v-model="form.due_date" type="date" placeholder="Due Date"
                             class="w-full px-4 py-2 bg-gray-800 border border-white/20 rounded text-white focus:outline-none focus:ring focus:border-yellow-400" />
                         <select v-model="form.project_id"
                             class="w-full px-4 py-2 bg-gray-800 border border-white/20 rounded text-white focus:outline-none focus:ring focus:border-yellow-400">
@@ -89,8 +104,7 @@ function completeTask(id) {
                             <option disabled value="">Assign to User</option>
                             <option v-for="user in filteredUsers" :key="user.id" :value="user.id">{{ user.name }}</option>
                         </select>
-                        <textarea v-model="form.comments" placeholder="Comments"
-                            class="w-full px-4 py-2 bg-gray-800 border border-white/20 rounded text-white placeholder-gray-400 focus:outline-none focus:ring focus:border-yellow-400"></textarea>
+                       
                         <button @click="submit"
                             class="bg-yellow-400 text-[#1e144f] px-4 py-2 rounded hover:bg-yellow-300 transition font-semibold">
                             Add Task
@@ -98,8 +112,7 @@ function completeTask(id) {
                     </div>
                 </div>
 
-                <!-- Task List -->
-                <div>
+                <div style="margin-bottom: 100px;">
                     <h2 class="text-2xl font-semibold mb-4">All Tasks</h2>
                     <ul class="space-y-4">
                         <li v-for="task in visibleTasks" :key="task.id"
@@ -116,7 +129,38 @@ function completeTask(id) {
                                 <span v-if="task.status === 'done'"
                                     class="inline-block mt-2 px-2 py-0.5 bg-green-600 text-white rounded text-xs">Completed</span>
                             </div>
-                            <div class="flex flex-col gap-2">
+                            <div class="flex flex-col gap-2 w-56">
+                                <!-- Add Comment Button and Textarea for assigned user only -->
+                                <div v-if="task.user_id === user.id && task.status !== 'done'">
+                                    <button
+                                        v-if="openCommentTaskId !== task.id"
+                                        @click="showCommentBox(task.id, task.comments)"
+                                        class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs mb-2"
+                                    >
+                                        Add Comment
+                                    </button>
+                                    <div v-else>
+                                        <textarea
+                                            v-model="commentInput"
+                                            placeholder="Add your comment"
+                                            class="w-full px-2 py-1 bg-gray-800 border border-white/20 rounded text-white placeholder-gray-400 focus:outline-none focus:ring focus:border-yellow-400 mb-2"
+                                        ></textarea>
+                                        <div class="flex gap-2">
+                                            <button
+                                                @click="submitComment(task.id)"
+                                                class="bg-yellow-400 text-[#1e144f] px-3 py-1 rounded hover:bg-yellow-300 text-xs font-semibold"
+                                            >
+                                                Save
+                                            </button>
+                                            <button
+                                                @click="openCommentTaskId = null"
+                                                class="bg-gray-600 text-white px-3 py-1 rounded text-xs"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                                 <button
                                     v-if="task.status !== 'done' && task.user_id === user.id"
                                     @click="completeTask(task.id)"

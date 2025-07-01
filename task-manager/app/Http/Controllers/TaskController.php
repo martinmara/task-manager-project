@@ -6,6 +6,7 @@ use App\Models\Task;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller {
     public function index() {
@@ -56,4 +57,21 @@ class TaskController extends Controller {
 
         return redirect()->route('tasks.index')->with('success', 'Task marked as completed.');
     }
+    public function updateComment(Request $request, $id)
+{
+    $task = \App\Models\Task::findOrFail($id);
+
+    if (Auth::user()->id !== $task->user_id) {
+        abort(403);
+    }
+
+    $request->validate([
+        'comments' => 'nullable|string',
+    ]);
+
+    $task->comments = $request->comments;
+    $task->save();
+
+    return redirect()->back()->with('success', 'Comment updated.');
+}
 }

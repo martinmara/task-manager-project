@@ -43,7 +43,6 @@ const editTeam = (team) => {
             </button>
         </div>
 
-        <!-- Team List -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             <div v-for="team in teams" :key="team.id"
                  class="p-4 rounded-xl bg-white shadow border-l-4 border-[#1e144f] flex flex-col justify-between">
@@ -58,7 +57,6 @@ const editTeam = (team) => {
             </div>
         </div>
 
-        <!-- Form Modal / Inline Form -->
         <div v-if="form.isDirty || editingTeam" class="mt-10">
             <h3 class="text-lg font-semibold text-[#1e144f] mb-2">
                 {{ editingTeam ? 'Edit Team' : 'Create New Team' }}

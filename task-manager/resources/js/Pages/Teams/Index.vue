@@ -89,7 +89,7 @@ function deleteTeam(teamId) {
             </div>
 
             <!-- Create Team (admin only) -->
-            <div v-if="isAdmin" class="bg-gray-800 text-white p-6 rounded-xl shadow border border-white/10">
+            <div v-if="isAdmin" class="bg-gray-800 text-white p-6 rounded-xl shadow border border-white/10" style="margin-bottom: 50px;">
                 <h2 class="text-xl font-semibold mb-4">Create New Team</h2>
                 <form @submit.prevent="submit" class="space-y-4">
                     <!-- Team Name -->
