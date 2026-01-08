@@ -1,10 +1,10 @@
-# fly.toml app configuration file generated for task-manager-project on 2026-01-08T13:56:41Z
+# fly.toml app configuration file generated for hello-fly-small-grass-7847 on 2026-01-08T14:17:56Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'task-manager-project'
-primary_region = 'fra'
+app = 'hello-fly-small-grass-7847'
+primary_region = 'iad'
 
 [build]
 
