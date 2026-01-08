@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 ############################################
-# 1) PHP deps (Composer) on PHP 8.2 (NOT 8.5)
+# 1) PHP deps (Composer) on PHP 8.2
 ############################################
 FROM php:8.2-cli-alpine AS phpdeps
 WORKDIR /app
@@ -18,21 +18,20 @@ COPY task-manager/composer.json task-manager/composer.lock ./
 # install vendor (no scripts for speed/safety in build)
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --no-scripts
 
-# now copy the app source (so vendor exists for frontend build too)
+# now copy the app source
 COPY task-manager/ ./
 
 # run again without --no-scripts in case your app needs package discovery, etc.
-# (safe to keep; if it breaks, add --no-scripts back)
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress
 
 
 ############################################
-# 2) Frontend build (Node 16 because your package requires it)
+# 2) Frontend build (Node 20 for Vite 6+)
 ############################################
-FROM node:16-alpine AS frontend
+FROM node:20-alpine AS frontend
 WORKDIR /app
 
-# bring the FULL app (including vendor) so Ziggy path exists if referenced
+# bring the FULL app (including vendor)
 COPY --from=phpdeps /app /app
 
 # build assets (Laravel/Vite default: /resources)
@@ -76,26 +75,22 @@ RUN apk add --no-cache \
     oniguruma-dev zip unzip \
     postgresql-dev
 
-
 # php extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
   && docker-php-ext-install -j$(nproc) pdo pdo_mysql pdo_pgsql mbstring gd intl opcache
 
-
 # copy app (including vendor) from phpdeps stage
 COPY --from=phpdeps /app /var/www/html
+
+# bring built frontend bundle
 COPY --from=frontend /out /out
 
-
-# copy built frontend output into Laravel public build locations
-# (covers typical Vite output folders)
+# copy built frontend output into Laravel public build location
 RUN set -eux; \
   mkdir -p /var/www/html/public/build; \
-  cp -R /var/www/html/public/build/. /tmp/public_build_backup 2>/dev/null || true; \
   rm -rf /var/www/html/public/build/*; \
-  cp -R /out/. /var/www/html/public/build/ || true
+  cp -R /out/. /var/www/html/public/build/
 
-# If your build outputs to /public/build already, the above still works.
 # Ensure permissions (important on Fly)
 RUN chown -R www-data:www-data /var/www/html \
   && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache || true
