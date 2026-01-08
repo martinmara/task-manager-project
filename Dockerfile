@@ -73,14 +73,19 @@ WORKDIR /var/www/html
 RUN apk add --no-cache \
     nginx supervisor bash curl icu-dev \
     libpng-dev libjpeg-turbo-dev freetype-dev \
-    oniguruma-dev zip unzip
+    oniguruma-dev zip unzip \
+    postgresql-dev
+
 
 # php extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-  && docker-php-ext-install -j$(nproc) pdo pdo_mysql mbstring gd intl opcache
+  && docker-php-ext-install -j$(nproc) pdo pdo_mysql pdo_pgsql mbstring gd intl opcache
+
 
 # copy app (including vendor) from phpdeps stage
 COPY --from=phpdeps /app /var/www/html
+COPY --from=frontend /out /out
+
 
 # copy built frontend output into Laravel public build locations
 # (covers typical Vite output folders)
