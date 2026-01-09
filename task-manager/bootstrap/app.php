@@ -3,28 +3,33 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use App\Http\Middleware\AdminMiddleware;
-use App\Http\Middleware\UserMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
-        commands: __DIR__.'/../routes/console.php',
+        web: __DIR__ . '/../routes/web.php',
+        commands: __DIR__ . '/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Only global and group middleware goes here
+        /**
+         * Web middleware stack additions.
+         * (This runs for routes in the "web" group.)
+         */
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        // ✅ Register custom named route middleware (correct way)
+        /**
+         * Route middleware aliases (Laravel 11 replacement for Kernel.php $routeMiddleware).
+         * These are used like: Route::middleware(['admin'])...
+         */
         $middleware->alias([
-            'admin' => AdminMiddleware::class,
-            'user' => UserMiddleware::class,
+            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'user'  => \App\Http\Middleware\UserMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
-    })->create();
+    })
+    ->create();
