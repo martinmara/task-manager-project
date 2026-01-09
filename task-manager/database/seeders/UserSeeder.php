@@ -9,29 +9,28 @@ use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        // Ensure the roles exist
-        $adminRole = Role::firstOrCreate(['name' => 'Admin']);
-        $employeeRole = Role::firstOrCreate(['name' => 'user']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $userRole  = Role::firstOrCreate(['name' => 'user']);
 
         $users = [
             [
                 'name' => 'Admin User',
                 'email' => 'admin@example.com',
                 'password' => Hash::make('password'),
-                'roles' => [$adminRole->id], // Use ID, not the model
+                'roles' => [$adminRole->id],
             ],
             [
                 'name' => 'User',
                 'email' => 'user@example.com',
                 'password' => Hash::make('password'),
-                'roles' => [$employeeRole->id], // Use ID, not the model
+                'roles' => [$userRole->id],
             ],
         ];
 
         foreach ($users as $userData) {
-            $user = User::firstOrCreate(
+            $user = User::updateOrCreate(
                 ['email' => $userData['email']],
                 [
                     'name' => $userData['name'],
@@ -39,7 +38,8 @@ class UserSeeder extends Seeder
                 ]
             );
 
-            $user->roles()->sync($userData['roles']); // Accepts array of IDs
+            // Many-to-many roles relationship
+            $user->roles()->sync($userData['roles']);
         }
     }
 }
