@@ -11,6 +11,11 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TimesheetController;
 
+/*
+|--------------------------------------------------------------------------
+| Public
+|--------------------------------------------------------------------------
+*/
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
@@ -19,50 +24,86 @@ Route::get('/', function () {
     ]);
 });
 
-// Shared by all authenticated users
+/*
+|--------------------------------------------------------------------------
+| Authenticated users (ALL roles)
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Profile management
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
 
-// Admin-only routes
-Route::middleware(['auth', 'verified'])->group(function () {
-    // Teams (add/update/delete)
-    Route::post('/teams', [TeamController::class, 'store'])->name('teams.store');
-    Route::put('/teams/{team}', [TeamController::class, 'update'])->name('teams.update');
-    Route::delete('/teams/{team}', [TeamController::class, 'destroy'])->name('teams.destroy');
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])
+        ->name('profile.destroy');
 
-    // Projects (add)
-    Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
-
-    // Tasks (add)
-    Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
-    Route::put('/tasks/{id}/complete', [TaskController::class, 'complete'])->name('tasks.complete');
-});
-
-// All authenticated users can view
-Route::middleware(['auth', 'verified'])->group(function () {
     // Teams (view only)
-    Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');
-    Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');
-Route::delete('/projects/{id}', [ProjectController::class, 'destroy'])->name('projects.destroy');
+    Route::get('/teams', [TeamController::class, 'index'])
+        ->name('teams.index');
+    Route::get('/teams/{team}', [TeamController::class, 'show'])
+        ->name('teams.show');
+
     // Projects (view only)
-    Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
-    Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
+    Route::get('/projects', [ProjectController::class, 'index'])
+        ->name('projects.index');
+    Route::get('/projects/{project}', [ProjectController::class, 'show'])
+        ->name('projects.show');
 
     // Tasks (view only)
-    Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
-    Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
-    Route::delete('/tasks/{id}', [TaskController::class, 'destroy'])->name('tasks.destroy');
-    // Timesheets (view/add/update)
-    Route::get('/timesheets', [TimesheetController::class, 'index'])->name('timesheets.index');
-    Route::post('/timesheets', [TimesheetController::class, 'store'])->name('timesheets.store');
-    Route::put('/timesheets/{id}', [TimesheetController::class, 'update'])->name('timesheets.update');
-    Route::put('/tasks/{id}/comment', [TaskController::class, 'updateComment'])->name('tasks.comment');
+    Route::get('/tasks', [TaskController::class, 'index'])
+        ->name('tasks.index');
+    Route::get('/tasks/{task}', [TaskController::class, 'show'])
+        ->name('tasks.show');
+
+    // Timesheets (all authenticated users)
+    Route::get('/timesheets', [TimesheetController::class, 'index'])
+        ->name('timesheets.index');
+    Route::post('/timesheets', [TimesheetController::class, 'store'])
+        ->name('timesheets.store');
+    Route::put('/timesheets/{id}', [TimesheetController::class, 'update'])
+        ->name('timesheets.update');
+
+    // Task comments
+    Route::put('/tasks/{id}/comment', [TaskController::class, 'updateComment'])
+        ->name('tasks.comment');
+});
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN-ONLY routes
+|--------------------------------------------------------------------------
+| Requires role "Admin"
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+
+    // Teams (create / update / delete)
+    Route::post('/teams', [TeamController::class, 'store'])
+        ->name('teams.store');
+    Route::put('/teams/{team}', [TeamController::class, 'update'])
+        ->name('teams.update');
+    Route::delete('/teams/{team}', [TeamController::class, 'destroy'])
+        ->name('teams.destroy');
+
+    // Projects (create / delete)
+    Route::post('/projects', [ProjectController::class, 'store'])
+        ->name('projects.store');
+    Route::delete('/projects/{id}', [ProjectController::class, 'destroy'])
+        ->name('projects.destroy');
+
+    // Tasks (create / complete / delete)
+    Route::post('/tasks', [TaskController::class, 'store'])
+        ->name('tasks.store');
+    Route::put('/tasks/{id}/complete', [TaskController::class, 'complete'])
+        ->name('tasks.complete');
+    Route::delete('/tasks/{id}', [TaskController::class, 'destroy'])
+        ->name('tasks.destroy');
 });
 
 require __DIR__.'/auth.php';
